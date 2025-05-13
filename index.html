@@ -19,33 +19,77 @@
             dropdown.replaceChildren(...meters)
         }
 
-        function generate_yaml() {
-            let meter_type = document.getElementById("meter_selector").value;
-            let name = document.getElementById("meter_name").value;
-            let meter_id = document.getElementById("meter_id").value;
-            let polling_interval = document.getElementById("polling_interval").value;
+        function get_parameters() {
+            let form_fields = {
+                "meter_type": document.getElementById("meter_selector").value,
+                "name": document.getElementById("meter_name").value,
+                "meter_id": document.getElementById("meter_id").value,
+                "polling_interval": document.getElementById("polling_interval").value,
+            };
 
-            // validation (id = number, interval = number, name = lowercase/number/_?)
-            // If good:
-            //   generate_meter_yaml()
-            // else:
-            //   show error thing
+            validate_parameters(form_fields);
+
+            return form_fields;
+        }
+
+        function validate_parameters(parameters) {
+            if (typeof parameters["name"] != "string" || parameters["name"] == "") {
+                window.alert("Name prefix cannot be empty.");
+                return;
+            }
+        }
+
+        function generate_yaml() {
+            let parameters = get_parameters();
+            let yaml = generate_meter_yaml(
+                parameters["meter_type"],
+                parameters["name"],
+                parameters["meter_id"],
+                parameters["polling_interval"]
+            );
 
             let output_elem = document.getElementById("meter_yaml");
 
-            let yaml = generate_meter_yaml(meter_type, name, meter_id, polling_interval);
             output_elem.replaceChildren(
                 document.createTextNode(yaml)
             );
+        }
+
+        function download_yaml() {
+            let parameters = get_parameters();
+            let yaml = generate_meter_yaml(
+                parameters["meter_type"],
+                parameters["name"],
+                parameters["meter_id"],
+                parameters["polling_interval"]
+            );
+
+            let filename = parameters["meter_type"] + "_" + parameters["name"] + ".yaml";
+
+            let blob = new Blob([yaml], { type: "application/yaml" });
+            let url = window.URL.createObjectURL(blob);
+
+            {
+                let a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.style = "display: none";
+                document.body.appendChild(a);
+                a.click(); // Make browser download the file
+
+                window.URL.revokeObjectURL(url);
+
+                a.remove(); // Remove from DOM
+            }
         }
     </script>
 </head>
 
 <body onload="load_meter_types()">
-    <h1>Energy Meter YAML generator</h1>
+    <h1>Energy Meter configuration generator</h1>
     <p>
-        Use this tool to create configuration files for allow the Modbus integration in Home Assistant to read values
-        from energy meters.
+        This tool helps to create configuration file (parts) to integrate energy meters with the the Modbus integration
+        in Home Assistant.
     </p>
     <p>
         It will generate a list of sensor definitions suitable for the <code>sensors</code> element of the <a
@@ -54,11 +98,15 @@
     </p>
     <p>
         You can put it directly in the configuration file where you define the Modbus hubs (make sure everything is
-        indented correctly), or in its own
-        file in a directory with configuration files for all other devices on the same bus using
+        indented correctly), or in its own file in a directory with configuration files for all other devices on the
+        same bus, using
         <code>!include_dir_merge_list</code> (see Home Assistant documentation about
         <a href="https://www.home-assistant.io/docs/configuration/splitting_configuration/">Splitting
-            Configuration</a> for more about that)
+            Configuration</a> for more information on how to do that).
+    </p>
+    <p>
+        If you have a different meter, feel free to add it by creating a pull request at <a
+            href="https://github.com/MartijnVdS/meter-config">github.com/MartijnVdS/meter-config</a>
     </p>
 
     <div>

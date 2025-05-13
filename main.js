@@ -1412,7 +1412,7 @@ function get_meter_types() {
 
 function generate_meter_yaml(meter_type, name, modbus_id, scan_interval) {
     if (!Object.hasOwn(METER_DEFINITIONS, meter_type)) {
-        throw "UnknownMeter"
+        return `Unknown meter type: ${meter_type}`;
     }
 
     let ret = "";

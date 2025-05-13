@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Modbus YAML Configuration Tool</title>
+    <script src="main.js"></script>
+    <script>
+        function load_meter_types() {
+            let dropdown = document.getElementById("meter_selector");
+            let meter_types = get_meter_types();
+
+            let meters = meter_types.map((e) => {
+                let o = document.createElement("option");
+                o.textContent = e["name"];
+                o.value = e["key"];
+                return o;
+            });
+
+            dropdown.replaceChildren(...meters)
+        }
+
+        function generate_yaml() {
+            let meter_type = document.getElementById("meter_selector").value;
+            let name = document.getElementById("meter_name").value;
+            let meter_id = document.getElementById("meter_id").value;
+            let polling_interval = document.getElementById("polling_interval").value;
+
+            // validation (id = number, interval = number, name = lowercase/number/_?)
+            // If good:
+            //   generate_meter_yaml()
+            // else:
+            //   show error thing
+
+            let output_elem = document.getElementById("meter_yaml");
+
+            let yaml = generate_meter_yaml(meter_type, name, meter_id, polling_interval);
+            output_elem.replaceChildren(
+                document.createTextNode(yaml)
+            );
+        }
+    </script>
+</head>
+
+<body onload="load_meter_types()">
+    <h1>Energy Meter YAML generator</h1>
+    <p>
+        Use this tool to create configuration files for allow the Modbus integration in Home Assistant to read values
+        from energy meters.
+    </p>
+    <p>
+        It will generate a list of sensor definitions suitable for the <code>sensors</code> element of the <a
+            href="https://www.home-assistant.io/integrations/modbus/">configuration of a Modbus hub in Home
+            Assistant</a>.
+    </p>
+    <p>
+        You can put it directly in the configuration file where you define the Modbus hubs (make sure everything is
+        indented correctly), or in its own
+        file in a directory with configuration files for all other devices on the same bus using
+        <code>!include_dir_merge_list</code> (see Home Assistant documentation about
+        <a href="https://www.home-assistant.io/docs/configuration/splitting_configuration/">Splitting
+            Configuration</a> for more about that)
+    </p>
+
+    <div>
+        <label for="meter_selector">Meter model:</label>
+        <select id="meter_selector">
+        </select>
+    </div>
+    <div>
+        <label for="meter_name">Name prefix:</label>
+        <input type="text" id="meter_name" placeholder="energy_meter_solar_inverter">
+    </div>
+    <div>
+        <label for="meter_id">Modbus address (&quot;slave id&quot;):</label>
+        <input type="number" id="meter_id" value="1">
+    </div>
+    <div>
+        <label for="polling_interval">Polling interval (seconds):</label>
+        <input type="number" id="polling_interval" value="30">
+    </div>
+    <div>
+        <button onclick="generate_yaml()">Generate</button>
+    </div>
+
+    <div>
+        <button onclick="download_yaml()">Download</button>
+    </div>
+    <pre id="meter_yaml"></pre>
+</body>
+
+</html>
